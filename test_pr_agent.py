@@ -16,6 +16,9 @@ def main(dry_run=True):
         agent = PRAgent(dry_run=dry_run)
         
         if not dry_run:
+            # Show which LLM provider we're using
+            print(f"\nUsing {agent.llm_provider.upper()} ({agent.llm_model})")
+            
             # Show available PRs
             list_open_prs(agent)
             pr_number = int(input("\nEnter PR number to review: "))
@@ -38,7 +41,7 @@ def main(dry_run=True):
         if dry_run:
             print("\nThis was a dry run. No APIs were called.")
         else:
-            print("\nPR review completed and description updated!")
+            print(f"\nPR review completed using {agent.llm_provider.upper()} and description updated!")
         
     except Exception as e:
         print(f"Error: {str(e)}")

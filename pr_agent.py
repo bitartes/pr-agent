@@ -3,7 +3,7 @@ from github import Github
 from github.GithubException import UnknownObjectException
 from dotenv import load_dotenv
 from typing import List, Dict
-import openai
+from openai import OpenAI
 import json
 
 class PRAgent:
@@ -18,7 +18,20 @@ class PRAgent:
                 self.repo.full_name
             except Exception as e:
                 raise Exception(f"Could not access repository: {str(e)}")
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+            
+            # Initialize LLM client
+            self.llm_provider = os.getenv("LLM_PROVIDER", "openai").lower()
+            if self.llm_provider == "openai":
+                self.llm_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                self.llm_model = os.getenv("OPENAI_MODEL", "gpt-4")
+            elif self.llm_provider == "deepseek":
+                self.llm_client = OpenAI(
+                    api_key=os.getenv("DEEPSEEK_API_KEY"),
+                    base_url="https://api.deepseek.com"
+                )
+                self.llm_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+            else:
+                raise Exception(f"Unsupported LLM provider: {self.llm_provider}")
 
     def get_pr_changes(self, pr_number: int) -> Dict:
         """Get the changes from a PR"""
@@ -92,18 +105,22 @@ class PRAgent:
         """
         
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
+            response = self.llm_client.chat.completions.create(
+                model=self.llm_model,
                 messages=[
                     {"role": "system", "content": "You are a helpful code reviewer."},
                     {"role": "user", "content": review_prompt}
                 ]
             )
+            
+            # Both OpenAI and Deepseek use similar response format
+            content = response.choices[0].message.content
+            
         except Exception as e:
-            raise Exception(f"Failed to generate review: {str(e)}")
+            raise Exception(f"Failed to generate review using {self.llm_provider}: {str(e)}")
         
         return {
-            "summary": response.choices[0].message['content'],
+            "summary": content,
             "original_changes": changes
         }
 
@@ -123,7 +140,7 @@ class PRAgent:
                           f"3. The PR number is correct")
         
         new_body = f"""
-        # PR Summary
+        # PR Summary (reviewed by {self.llm_provider.title()})
         {review_results['summary']}
         
         ---
