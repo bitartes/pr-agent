@@ -1,0 +1,12 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  call-pr-review:
+    uses: bitartes/pr-agent/.github/workflows/reusable_pr_review.yml@main  # Replace with your username/repo
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
