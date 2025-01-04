@@ -1,10 +1,15 @@
 """Example usage of PR Agent."""
 
+from dotenv import load_dotenv
+
 from pr_agent import PRAgent
 
 
 def main() -> None:
     """Run example PR review."""
+    # Load environment variables first
+    load_dotenv()
+
     # Initialize agent
     agent = PRAgent(dry_run=True)
 

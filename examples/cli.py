@@ -1,5 +1,9 @@
 """CLI tool to test PR Agent functionality."""
 
+import argparse
+
+from dotenv import load_dotenv
+
 from pr_agent import PRAgent
 
 
@@ -13,17 +17,22 @@ def list_open_prs(agent: PRAgent) -> None:
         print("-" * 50)
 
 
-def main(dry_run: bool = True) -> None:
-    """Run the PR agent CLI tool.
+def main() -> None:
+    """Run the PR agent CLI tool."""
+    # Load environment variables first
+    load_dotenv()
 
-    Args:
-        dry_run: If True, don't make any actual API calls.
-    """
+    parser = argparse.ArgumentParser(description="PR Agent CLI tool")
+    parser.add_argument(
+        "--live", action="store_true", help="Run in live mode (requires GitHub token)"
+    )
+    args = parser.parse_args()
+
     try:
         # Initialize PR agent
-        agent = PRAgent(dry_run=dry_run)
+        agent = PRAgent(dry_run=not args.live)
 
-        if not dry_run:
+        if not agent.dry_run:
             # Show which LLM provider we're using
             print(f"\nUsing {agent.llm_provider.upper()} ({agent.llm_model})")
 
@@ -34,7 +43,7 @@ def main(dry_run: bool = True) -> None:
             pr_number = 1  # Dummy number for dry run
 
         # Review the PR
-        print(f"\nRunning PR review ({'dry run' if dry_run else ''})...")
+        print(f"\nRunning PR review ({'dry run' if agent.dry_run else ''})...")
         review_results = agent.review_pr(pr_number)
 
         # Print the review results
@@ -46,15 +55,14 @@ def main(dry_run: bool = True) -> None:
         print("\nUpdating PR description...")
         agent.update_pr_description(pr_number, review_results)
 
-        if dry_run:
+        if agent.dry_run:
             print("\nThis was a dry run. No APIs were called.")
         else:
-            msg = f"\nPR review completed using {agent.llm_provider.upper()}"
-            print(f"{msg} and description updated!")
+            print("\nPR review completed successfully!")
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"\nError: {str(e)}")
 
 
 if __name__ == "__main__":
-    main(dry_run=False)
+    main()

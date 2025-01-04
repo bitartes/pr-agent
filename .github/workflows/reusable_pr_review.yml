@@ -1,5 +1,7 @@
 name: Reusable PR Review
 
+# This is a reusable workflow meant to be called from other repositories.
+# It will not run directly in this repository.
 on:
   workflow_call:
     inputs:
@@ -77,6 +79,5 @@ jobs:
         LLM_PROVIDER: ${{ inputs.llm_provider }}
         OPENAI_MODEL: ${{ inputs.openai_model }}
         DEEPSEEK_MODEL: ${{ inputs.deepseek_model }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         python -m pr_agent

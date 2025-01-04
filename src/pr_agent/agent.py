@@ -20,7 +20,10 @@ class PRAgent:
         """
         self.dry_run = dry_run
         self.llm_provider = os.getenv("LLM_PROVIDER", "openai").lower()
-        self.llm_model = os.getenv("LLM_MODEL", "gpt-4-1106-preview")
+        self.llm_model = os.getenv(
+            f"{self.llm_provider.upper()}_MODEL",
+            "gpt-4-1106-preview" if self.llm_provider == "openai" else "deepseek-chat",
+        )
 
         if not dry_run:
             self._init_github()
@@ -51,8 +54,7 @@ class PRAgent:
             deepseek_key = os.getenv("DEEPSEEK_API_KEY")
             if not deepseek_key:
                 raise ValueError("DEEPSEEK_API_KEY environment variable is required")
-            # Initialize Deepseek client here
-            raise NotImplementedError("Deepseek support not implemented yet")
+            self.llm_client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com/v1")
         else:
             raise ValueError(f"Unsupported LLM provider: {self.llm_provider}")
 
@@ -102,8 +104,39 @@ class PRAgent:
         if self.dry_run:
             return {"summary": "This is a dry run review.", "original_changes": changes}
 
-        # TODO: Implement actual LLM-based review
-        raise NotImplementedError("LLM-based review not implemented yet")
+        # Create system message
+        system_msg = {
+            "role": "system",
+            "content": (
+                "You are a helpful code reviewer. Review the pull request changes "
+                "and provide constructive feedback. Focus on code quality, potential bugs, "
+                "and suggestions for improvement. Format your response in markdown."
+            ),
+        }
+
+        # Create user message with PR details
+        user_msg = {
+            "role": "user",
+            "content": (
+                f"Please review this pull request:\n\n"
+                f"Title: {changes['title']}\n"
+                f"Description: {changes['body']}\n\n"
+                f"Files changed:\n{', '.join(changes['files'])}\n\n"
+                f"Changes:\n```diff\n{changes['diff']}\n```"
+            ),
+        }
+
+        try:
+            # Call LLM API based on provider
+            response = self.llm_client.chat.completions.create(
+                model=self.llm_model, messages=[system_msg, user_msg]
+            )
+            summary = response.choices[0].message.content
+
+            return {"summary": summary, "original_changes": changes}
+
+        except Exception as e:
+            raise ValueError(f"Failed to generate review: {str(e)}")
 
     def update_pr_description(self, pr_number: int, review_results: Dict[str, Any]) -> None:
         """Update PR description with review results.
@@ -130,8 +163,18 @@ def main() -> None:
     load_dotenv()
     agent = PRAgent()
 
-    # When running in GitHub Actions
-    pr_number = int(os.getenv("PR_NUMBER", "0"))
-    if pr_number > 0:
-        review_results = agent.review_pr(pr_number)
-        agent.update_pr_description(pr_number, review_results)
+    # When running in GitHub Actions, get PR number from event context
+    event_path = os.getenv("GITHUB_EVENT_PATH")
+    if event_path and os.path.exists(event_path):
+        import json
+
+        with open(event_path) as f:
+            event = json.loads(f.read())
+            pr_number = event.get("pull_request", {}).get("number")
+            if pr_number:
+                review_results = agent.review_pr(pr_number)
+                agent.update_pr_description(pr_number, review_results)
+            else:
+                print("No PR number found in GitHub event context")
+    else:
+        print("Not running in GitHub Actions context")

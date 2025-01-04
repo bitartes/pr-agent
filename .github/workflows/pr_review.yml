@@ -3,6 +3,8 @@ name: PR Review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '.github/workflows/reusable_pr_review.yml'  # Ignore changes to the reusable workflow
 
 jobs:
   review:
@@ -33,6 +35,5 @@ jobs:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         REPO_OWNER: ${{ github.repository_owner }}
         REPO_NAME: ${{ github.event.repository.name }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         python -m pr_agent
