@@ -5,8 +5,6 @@ on:
     secrets:
       OPENAI_API_KEY:
         required: true
-      ANTHROPIC_API_KEY:
-        required: true
 
 jobs:
   review:
@@ -42,7 +40,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         REPO_OWNER: ${{ github.repository_owner }}
         REPO_NAME: ${{ github.event.repository.name }}
       run: |
