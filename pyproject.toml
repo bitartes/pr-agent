@@ -1,0 +1,113 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pr-agent"
+version = "1.0.0"
+description = "A GitHub Pull Request agent that automatically reviews PRs using various LLM providers"
+readme = "README.md"
+authors = [
+    {name = "Bitartes", email = "your-email@example.com"}
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3"
+]
+keywords = ["github", "pull request", "review", "openai", "deepseek"]
+dependencies = [
+    "python-dotenv>=1.0.0",
+    "PyGithub>=2.1.1",
+    "openai>=1.3.7",
+    "python-decouple>=3.8"
+]
+requires-python = ">=3.13"
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=3.6.0",
+    "black>=23.12.1",
+    "isort>=5.13.2",
+    "flake8>=7.0.0",
+    "flake8-docstrings>=1.7.0",
+    "flake8-quotes>=3.3.2",
+    "flake8-comprehensions>=3.14.0",
+    "mypy>=1.8.0",
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "gitlint>=0.19.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/bitartes/pr-agent"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+include = "\\.pyi?$"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 100
+
+[tool.gitlint]
+contrib = true
+ignore = ["title-max-length", "body-max-line-length"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false  # Allow untyped decorators for pytest
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = ["src", "src/stubs"]
+ignore_missing_imports = true  # Ignore missing imports for external packages
+exclude = [
+    '.git',
+    '__pycache__',
+    'build',
+    'dist',
+    '.cache',
+    '.pytest_cache',
+    '.mypy_cache',
+]
+
+[[tool.mypy.overrides]]
+module = "src.pr_agent.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytest.*"
+ignore_missing_imports = true
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = "github.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "openai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "dotenv.*"
+ignore_missing_imports = true

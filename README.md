@@ -17,15 +17,26 @@ A GitHub Pull Request agent that automatically reviews PRs, suggests improvement
 ### Local Setup
 
 1. Clone the repository
-2. Install dependencies:
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Copy `.env.example` to `.env` and fill in your API keys:
+4. Set up pre-commit hooks:
+   ```bash
+   pip install pre-commit
+   pre-commit install
+   pre-commit install --hook-type commit-msg  # For commit message linting
+   ```
+5. Copy `.env.example` to `.env` and fill in your API keys:
    ```bash
    cp .env.example .env
    ```
-4. Configure your environment variables in `.env`:
+6. Configure your environment variables in `.env`:
    ```bash
    # GitHub Configuration
    GITHUB_TOKEN=your_github_token_here    # Create at https://github.com/settings/tokens
@@ -81,6 +92,41 @@ To use PR Agent in your repository via GitHub Actions:
 
 The workflow will automatically review any new or updated PRs.
 
+## Development
+
+### Code Quality Tools
+
+The project uses several code quality tools:
+
+- **Black**: Code formatting
+- **isort**: Import sorting
+- **Flake8**: Style guide enforcement
+- **MyPy**: Static type checking
+- **pre-commit**: Automated code quality checks
+- **pytest**: Testing framework
+
+These tools run automatically on each commit via pre-commit hooks.
+
+### Running Tests
+
+```bash
+pytest
+```
+
+This will run all tests and generate a coverage report.
+
+### Pre-commit Hooks
+
+The following checks run automatically before each commit:
+- Code formatting (Black)
+- Import sorting (isort)
+- Style checks (Flake8)
+- Type checking (MyPy)
+- Basic file checks (trailing whitespace, YAML validity, etc.)
+- Commit message linting (conventional commits)
+
+If any check fails, the commit will be blocked. Fix the issues and try committing again.
+
 ## Local Usage
 
 ```python
@@ -110,5 +156,11 @@ The agent supports two LLM providers:
 Switch between providers by setting `LLM_PROVIDER` in your `.env` file or in the GitHub Actions workflow.
 
 ## Contributing
+
+1. Fork the repository
+2. Set up the development environment as described above
+3. Make your changes
+4. Ensure all tests pass and code quality checks succeed
+5. Submit a pull request
 
 Feel free to submit issues and enhancement requests!
