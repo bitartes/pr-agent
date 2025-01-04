@@ -1,0 +1,66 @@
+name: 'PR Review Agent'
+description: 'Automatically review pull requests using OpenAI or Deepseek'
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'
+
+inputs:
+  llm_provider:
+    description: 'LLM provider to use (openai or deepseek)'
+    required: false
+    default: 'openai'
+  openai_model:
+    description: 'OpenAI model to use'
+    required: false
+    default: 'gpt-4'
+  deepseek_model:
+    description: 'Deepseek model to use'
+    required: false
+    default: 'deepseek-chat'
+  github_token:
+    description: 'GitHub token'
+    required: true
+  openai_key:
+    description: 'OpenAI API key'
+    required: false
+  deepseek_key:
+    description: 'Deepseek API key'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+
+    - name: Validate Configuration
+      shell: bash
+      run: |
+        if [[ "${{ inputs.llm_provider }}" == "openai" && -z "${{ inputs.openai_key }}" ]]; then
+          echo "Error: OpenAI API key is required when using OpenAI provider"
+          exit 1
+        fi
+        if [[ "${{ inputs.llm_provider }}" == "deepseek" && -z "${{ inputs.deepseek_key }}" ]]; then
+          echo "Error: Deepseek API key is required when using Deepseek provider"
+          exit 1
+        fi
+
+    - name: Run PR Review
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        OPENAI_API_KEY: ${{ inputs.openai_key }}
+        DEEPSEEK_API_KEY: ${{ inputs.deepseek_key }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        REPO_NAME: ${{ github.event.repository.name }}
+        LLM_PROVIDER: ${{ inputs.llm_provider }}
+        OPENAI_MODEL: ${{ inputs.openai_model }}
+        DEEPSEEK_MODEL: ${{ inputs.deepseek_model }}
+      run: python ${{ github.action_path }}/pr_agent.py

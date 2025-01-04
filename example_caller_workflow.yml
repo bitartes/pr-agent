@@ -5,7 +5,13 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  call-pr-review:
-    uses: bitartes/pr-agent/.github/workflows/reusable_pr_review.yml@main  # Replace with your username/repo
-    secrets:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: bitartes/pr-agent@v1  # After publishing, use specific version like @v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          llm_provider: deepseek        # or 'openai'
+          deepseek_key: ${{ secrets.DEEPSEEK_API_KEY }}
+          # openai_key: ${{ secrets.OPENAI_API_KEY }}  # uncomment if using OpenAI
+          # openai_model: gpt-4        # optional: customize model

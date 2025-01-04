@@ -2,9 +2,29 @@ name: Reusable PR Review
 
 on:
   workflow_call:
+    inputs:
+      llm_provider:
+        description: 'LLM provider to use (openai or deepseek)'
+        required: false
+        type: string
+        default: 'openai'
+      openai_model:
+        description: 'OpenAI model to use'
+        required: false
+        type: string
+        default: 'gpt-4'
+      deepseek_model:
+        description: 'Deepseek model to use'
+        required: false
+        type: string
+        default: 'deepseek-chat'
     secrets:
-      OPENAI_API_KEY:
+      GITHUB_TOKEN:
         required: true
+      OPENAI_API_KEY:
+        required: false
+      DEEPSEEK_API_KEY:
+        required: false
 
 jobs:
   review:
@@ -35,12 +55,27 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Validate Configuration
+      run: |
+        if [[ "${{ inputs.llm_provider }}" == "openai" && -z "${{ secrets.OPENAI_API_KEY }}" ]]; then
+          echo "Error: OpenAI API key is required when using OpenAI provider"
+          exit 1
+        fi
+        if [[ "${{ inputs.llm_provider }}" == "deepseek" && -z "${{ secrets.DEEPSEEK_API_KEY }}" ]]; then
+          echo "Error: Deepseek API key is required when using Deepseek provider"
+          exit 1
+        fi
+
     - name: Run PR Review
       working-directory: pr-agent
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         REPO_OWNER: ${{ github.repository_owner }}
         REPO_NAME: ${{ github.event.repository.name }}
+        LLM_PROVIDER: ${{ inputs.llm_provider }}
+        OPENAI_MODEL: ${{ inputs.openai_model }}
+        DEEPSEEK_MODEL: ${{ inputs.deepseek_model }}
       run: |
         python pr_agent.py
